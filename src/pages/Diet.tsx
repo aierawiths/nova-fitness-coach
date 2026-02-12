@@ -1,43 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Apple, ChevronDown, ChevronUp, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
-interface Meal {
-  mealType: string;
-  food: string;
-  calories: string;
-  protein: string;
-  carbs: string;
-  fat: string;
-}
-
-interface DayMeals {
-  day: string;
-  meals: Meal[];
-}
-
-const sampleDiet: { macros: { calories: string; protein: string; carbs: string; fat: string }; plan: DayMeals[] } = {
-  macros: { calories: "2,200", protein: "165g", carbs: "245g", fat: "73g" },
-  plan: [
-    {
-      day: "Monday", meals: [
-        { mealType: "Breakfast", food: "Greek Yogurt Parfait with Berries & Granola", calories: "420", protein: "30g", carbs: "52g", fat: "12g" },
-        { mealType: "Lunch", food: "Grilled Chicken Bowl with Rice & Veggies", calories: "650", protein: "45g", carbs: "68g", fat: "18g" },
-        { mealType: "Snack", food: "Protein Shake with Banana", calories: "280", protein: "32g", carbs: "35g", fat: "4g" },
-        { mealType: "Dinner", food: "Salmon with Sweet Potato & Asparagus", calories: "580", protein: "42g", carbs: "48g", fat: "22g" },
-      ],
-    },
-    {
-      day: "Tuesday", meals: [
-        { mealType: "Breakfast", food: "Oatmeal with Whey Protein & Almonds", calories: "450", protein: "35g", carbs: "55g", fat: "14g" },
-        { mealType: "Lunch", food: "Turkey Wrap with Avocado", calories: "520", protein: "38g", carbs: "42g", fat: "20g" },
-        { mealType: "Dinner", food: "Lean Beef Stir Fry with Noodles", calories: "620", protein: "40g", carbs: "58g", fat: "22g" },
-      ],
-    },
-  ],
-};
+interface Meal { mealType: string; food: string; calories: string; protein: string; carbs: string; fat: string; }
+interface DayMeals { day: string; meals: Meal[]; }
 
 const MacroBar = ({ label, value, color }: { label: string; value: string; color: string }) => (
   <div className="flex-1 text-center">
@@ -50,10 +20,44 @@ const MacroBar = ({ label, value, color }: { label: string; value: string; color
 const Diet = () => {
   const [expandedDay, setExpandedDay] = useState(0);
   const [generating, setGenerating] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [macros, setMacros] = useState({ calories: "—", protein: "—", carbs: "—", fat: "—" });
+  const [mealPlan, setMealPlan] = useState<DayMeals[]>([]);
 
-  const handleGenerate = () => {
+  useEffect(() => {
+    const fetchLatest = async () => {
+      const { data } = await (supabase.from("diet_plans") as any)
+        .select("*").order("created_at", { ascending: false }).limit(1).maybeSingle();
+      if (data?.plan_data) {
+        setMacros({
+          calories: data.plan_data.dailyCalories || "—",
+          protein: data.plan_data.protein || "—",
+          carbs: data.plan_data.carbs || "—",
+          fat: data.plan_data.fat || "—",
+        });
+        setMealPlan(data.plan_data.mealPlan || []);
+      }
+      setLoading(false);
+    };
+    fetchLatest();
+  }, []);
+
+  const handleGenerate = async () => {
     setGenerating(true);
-    setTimeout(() => setGenerating(false), 2000);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("generate-diet", {
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (res.error) throw new Error(res.error.message);
+      const pd = res.data?.plan_data || res.data;
+      setMacros({ calories: pd.dailyCalories || "—", protein: pd.protein || "—", carbs: pd.carbs || "—", fat: pd.fat || "—" });
+      setMealPlan(pd.mealPlan || []);
+      toast({ title: "Diet plan generated!" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+    setGenerating(false);
   };
 
   return (
@@ -64,22 +68,17 @@ const Diet = () => {
           <p className="text-sm text-muted-foreground mt-1">AI-optimized nutrition for your goals</p>
         </motion.div>
 
-        {/* Daily Macros */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mt-5 p-4 rounded-2xl bg-gradient-card border border-border/30"
-        >
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          className="mt-5 p-4 rounded-2xl bg-gradient-card border border-border/30">
           <div className="flex items-center gap-2 mb-3">
             <Flame className="w-4 h-4 text-primary" />
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Daily Target</span>
           </div>
           <div className="flex items-center">
-            <MacroBar label="Calories" value={sampleDiet.macros.calories} color="bg-primary" />
-            <MacroBar label="Protein" value={sampleDiet.macros.protein} color="bg-accent" />
-            <MacroBar label="Carbs" value={sampleDiet.macros.carbs} color="bg-primary/60" />
-            <MacroBar label="Fat" value={sampleDiet.macros.fat} color="bg-destructive/60" />
+            <MacroBar label="Calories" value={macros.calories} color="bg-primary" />
+            <MacroBar label="Protein" value={macros.protein} color="bg-accent" />
+            <MacroBar label="Carbs" value={macros.carbs} color="bg-primary/60" />
+            <MacroBar label="Fat" value={macros.fat} color="bg-destructive/60" />
           </div>
         </motion.div>
 
@@ -88,53 +87,45 @@ const Diet = () => {
           {generating ? "Generating..." : "Generate New Plan"}
         </Button>
 
-        {/* Meal plan */}
-        <div className="mt-6 space-y-3">
-          {sampleDiet.plan.map((day, idx) => (
-            <motion.div
-              key={day.day}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.05 }}
-              className="rounded-2xl border border-border/30 overflow-hidden bg-card"
-            >
-              <button
-                className="w-full flex items-center justify-between p-4"
-                onClick={() => setExpandedDay(expandedDay === idx ? -1 : idx)}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                    <Apple className="w-5 h-5 text-accent" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-sm font-semibold text-foreground">{day.day}</p>
-                    <p className="text-xs text-muted-foreground">{day.meals.length} meals</p>
-                  </div>
-                </div>
-                {expandedDay === idx ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-              </button>
-
-              {expandedDay === idx && (
-                <div className="px-4 pb-4 space-y-2.5">
-                  {day.meals.map((meal, i) => (
-                    <div key={i} className="p-3 rounded-xl bg-secondary/50 border border-border/20">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-semibold text-primary uppercase">{meal.mealType}</span>
-                        <span className="text-xs text-muted-foreground">{meal.calories} cal</span>
-                      </div>
-                      <p className="text-sm text-foreground">{meal.food}</p>
-                      <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
-                        <span>P: {meal.protein}</span>
-                        <span>C: {meal.carbs}</span>
-                        <span>F: {meal.fat}</span>
-                      </div>
+        {loading ? (
+          <div className="mt-8 flex justify-center"><Sparkles className="w-6 h-6 text-primary animate-pulse-glow" /></div>
+        ) : mealPlan.length === 0 ? (
+          <div className="mt-8 text-center text-muted-foreground text-sm">No diet plan yet. Generate one above!</div>
+        ) : (
+          <div className="mt-6 space-y-3">
+            {mealPlan.map((day, idx) => (
+              <motion.div key={day.day} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
+                className="rounded-2xl border border-border/30 overflow-hidden bg-card">
+                <button className="w-full flex items-center justify-between p-4" onClick={() => setExpandedDay(expandedDay === idx ? -1 : idx)}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center"><Apple className="w-5 h-5 text-accent" /></div>
+                    <div className="text-left">
+                      <p className="text-sm font-semibold text-foreground">{day.day}</p>
+                      <p className="text-xs text-muted-foreground">{day.meals?.length || 0} meals</p>
                     </div>
-                  ))}
-                </div>
-              )}
-            </motion.div>
-          ))}
-        </div>
+                  </div>
+                  {expandedDay === idx ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                </button>
+                {expandedDay === idx && (
+                  <div className="px-4 pb-4 space-y-2.5">
+                    {day.meals?.map((meal, i) => (
+                      <div key={i} className="p-3 rounded-xl bg-secondary/50 border border-border/20">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-semibold text-primary uppercase">{meal.mealType}</span>
+                          <span className="text-xs text-muted-foreground">{meal.calories} cal</span>
+                        </div>
+                        <p className="text-sm text-foreground">{meal.food}</p>
+                        <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
+                          <span>P: {meal.protein}</span><span>C: {meal.carbs}</span><span>F: {meal.fat}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
