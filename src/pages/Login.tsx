@@ -2,12 +2,14 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Mail, Lock, Phone } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import fitnessHero from "@/assets/fitness-hero.jpg";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import PhoneNumberInput from "@/components/PhoneNumberInput";
+import { isValidPhoneNumber } from "react-phone-number-input";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -34,7 +36,10 @@ const Login = () => {
   };
 
   const handleSendOtp = async () => {
-    if (!phone) return;
+    if (!phone || !isValidPhoneNumber(phone)) {
+      toast({ title: "Invalid number", description: "Please enter a valid phone number with country code.", variant: "destructive" });
+      return;
+    }
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-otp", {
@@ -134,16 +139,11 @@ const Login = () => {
           <div className="space-y-4">
             {!otpSent ? (
               <>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    type="tel"
-                    placeholder="+1 234 567 8900"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="pl-10 h-12 bg-secondary border-border/50 text-foreground placeholder:text-muted-foreground"
-                  />
-                </div>
+                <PhoneNumberInput
+                  value={phone}
+                  onChange={setPhone}
+                  placeholder="Enter phone number"
+                />
                 <Button variant="glow" size="lg" className="w-full" disabled={loading || !phone} onClick={handleSendOtp}>
                   {loading ? "Sending..." : "Send OTP"}
                 </Button>
