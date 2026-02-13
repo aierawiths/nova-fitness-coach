@@ -107,4 +107,29 @@
   .safe-top {
     padding-top: max(env(safe-area-inset-top, 0px), 16px);
   }
+
+  /* Phone number input styling */
+  .phone-input-wrapper .PhoneInput {
+    @apply flex items-center gap-2;
+  }
+
+  .phone-input-wrapper .PhoneInputCountry {
+    @apply flex items-center;
+  }
+
+  .phone-input-wrapper .PhoneInputCountrySelect {
+    @apply bg-transparent text-foreground border-none outline-none cursor-pointer;
+  }
+
+  .phone-input-wrapper .PhoneInputInput {
+    @apply flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground text-base h-full;
+  }
+
+  .phone-input-wrapper .PhoneInputCountryIcon {
+    @apply w-6 h-4;
+  }
+
+  .phone-input-wrapper .PhoneInputCountrySelectArrow {
+    @apply text-muted-foreground ml-1;
+  }
 }
