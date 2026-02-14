@@ -34,32 +34,31 @@ serve(async (req) => {
     await supabase.from("phone_otps").update({ verified: true }).eq("id", otpRecord.id);
 
     // Check if user with this phone exists
-    const { data: existingUsers } = await supabase.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find(
-      (u) => u.phone === phone || u.user_metadata?.phone === phone
-    );
+    const { data: existingProfile } = await supabase
+      .from("profiles")
+      .select("id, phone")
+      .eq("phone", phone)
+      .maybeSingle();
 
-    if (existingUser) {
-      // Generate a magic link session for existing user
-      const { data: sessionData, error: signInErr } = await supabase.auth.admin.generateLink({
-        type: "magiclink",
-        email: existingUser.email!,
+    if (existingProfile) {
+      // Existing phone user - generate a new password and update, then return credentials
+      const newPassword = crypto.randomUUID();
+      const { error: updateErr } = await supabase.auth.admin.updateUserById(existingProfile.id, {
+        password: newPassword,
       });
-      if (signInErr) throw signInErr;
+      if (updateErr) throw updateErr;
 
-      // Sign in directly by creating session
-      const { data: tokenData, error: tokenErr } = await supabase.auth.admin.generateLink({
-        type: "magiclink",
-        email: existingUser.email!,
-      });
+      // Get the user's email to sign in
+      const { data: userData, error: userErr } = await supabase.auth.admin.getUserById(existingProfile.id);
+      if (userErr) throw userErr;
 
-      // Return user info so client can use signInWithPassword or we use a custom approach
       return new Response(
         JSON.stringify({
           success: true,
           isNewUser: false,
-          userId: existingUser.id,
-          email: existingUser.email,
+          userId: existingProfile.id,
+          email: userData.user.email,
+          password: newPassword,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );

@@ -66,20 +66,9 @@ const Login = () => {
       if (data?.error) throw new Error(data.error);
 
       if (data.email && data.password) {
-        // New user - sign in with generated creds
         await signIn(data.email, data.password);
-      } else if (data.email) {
-        // Existing user - need their password
-        toast({
-          title: "Account found",
-          description: "This phone is linked to an existing account. Please sign in with your email and password.",
-        });
-        setMode("email");
-        setEmail(data.email);
-        setLoading(false);
-        return;
+        navigate("/dashboard");
       }
-      navigate("/dashboard");
     } catch (err: any) {
       toast({ title: "Verification failed", description: err.message, variant: "destructive" });
     }
@@ -134,6 +123,11 @@ const Login = () => {
             <Button type="submit" variant="glow" size="lg" className="w-full" disabled={loading}>
               {loading ? "Signing in..." : "Sign In"}
             </Button>
+            <div className="text-right">
+              <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+                Forgot password?
+              </Link>
+            </div>
           </form>
         ) : (
           <div className="space-y-4">
