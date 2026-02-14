@@ -22,7 +22,8 @@ serve(async (req) => {
     const { data: profile } = await supabaseClient.from("profiles").select("*").eq("id", user.id).single();
     if (!profile) throw new Error("Profile not found");
 
-    const prompt = `You are a certified fitness trainer. Generate a structured 7-day workout plan for:
+    // Step 1: Generate workout plan
+    const workoutPrompt = `You are a certified fitness trainer. Generate a structured 7-day workout plan for:
 - Goal: ${profile.goal || "General Fitness"}
 - Experience: ${profile.experience || "Beginner"}
 - Equipment: ${profile.equipment || "Full Gym"}
@@ -34,7 +35,7 @@ serve(async (req) => {
 Return ONLY valid JSON (no markdown):
 {"weeklyPlan":[{"day":"Monday","focus":"","exercises":[{"name":"","sets":"","reps":"","rest":"","tips":""}]}]}`;
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const workoutRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -42,26 +43,77 @@ Return ONLY valid JSON (no markdown):
       },
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
-        messages: [{ role: "user", content: prompt }],
+        messages: [{ role: "user", content: workoutPrompt }],
         temperature: 0.7,
       }),
     });
 
-    const aiData = await aiRes.json();
-    let content = aiData.choices?.[0]?.message?.content || "";
-    content = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    const planData = JSON.parse(content);
+    const workoutAiData = await workoutRes.json();
+    let workoutContent = workoutAiData.choices?.[0]?.message?.content || "";
+    workoutContent = workoutContent.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const workoutPlanData = JSON.parse(workoutContent);
 
-    const { data: plan, error } = await supabaseClient
+    // Save workout plan
+    const { data: workoutPlan, error: workoutError } = await supabaseClient
       .from("workout_plans")
-      .insert({ user_id: user.id, plan_data: planData })
+      .insert({ user_id: user.id, plan_data: workoutPlanData })
       .select()
       .single();
 
-    if (error) throw error;
+    if (workoutError) throw workoutError;
 
-    return new Response(JSON.stringify(plan), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    // Step 2: Generate diet plan that complements the workout
+    const workoutSummary = workoutPlanData.weeklyPlan?.map((d: any) => `${d.day}: ${d.focus}`).join(", ") || "General training";
+
+    const dietPrompt = `You are a certified sports nutritionist. Generate a 7-day meal plan that perfectly complements this workout schedule: ${workoutSummary}
+
+User profile:
+- Goal: ${profile.goal || "General Fitness"}
+- Weight: ${profile.weight || "Not specified"}kg
+- Height: ${profile.height || "Not specified"}cm
+- Activity Level: ${profile.activity_level || "Moderate"}
+- Dietary Preference: ${profile.dietary_preference || "No Preference"}
+- Allergies: ${profile.allergies || "None"}
+- Gender: ${profile.gender || "Not specified"}
+- Age: ${profile.age || "Not specified"}
+
+IMPORTANT: Match each day's nutrition to the workout intensity. On heavy training days, increase carbs and calories. On rest days, reduce calories slightly and increase protein for recovery.
+
+Return ONLY valid JSON (no markdown):
+{"dailyCalories":"","protein":"","carbs":"","fat":"","mealPlan":[{"day":"Monday","meals":[{"mealType":"Breakfast","food":"","calories":"","protein":"","carbs":"","fat":""}]}]}`;
+
+    const dietRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [{ role: "user", content: dietPrompt }],
+        temperature: 0.7,
+      }),
+    });
+
+    const dietAiData = await dietRes.json();
+    let dietContent = dietAiData.choices?.[0]?.message?.content || "";
+    dietContent = dietContent.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const dietPlanData = JSON.parse(dietContent);
+
+    // Save diet plan
+    const { data: dietPlan, error: dietError } = await supabaseClient
+      .from("diet_plans")
+      .insert({ user_id: user.id, plan_data: dietPlanData })
+      .select()
+      .single();
+
+    if (dietError) throw dietError;
+
+    return new Response(JSON.stringify({ workout: workoutPlan, diet: dietPlan }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (error: any) {
+    console.error("generate-workout error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

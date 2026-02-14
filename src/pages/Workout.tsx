@@ -33,9 +33,10 @@ const Workout = () => {
         headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       if (res.error) throw new Error(res.error.message);
-      if (res.data?.plan_data?.weeklyPlan) {
-        setPlan(res.data.plan_data.weeklyPlan);
-        toast({ title: "Workout plan generated!" });
+      const workoutData = res.data?.workout?.plan_data || res.data?.plan_data;
+      if (workoutData?.weeklyPlan) {
+        setPlan(workoutData.weeklyPlan);
+        toast({ title: "Workout & Diet plan generated!", description: "Your matching diet plan is ready on the Diet page." });
       }
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
