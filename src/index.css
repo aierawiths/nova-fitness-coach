@@ -25,7 +25,7 @@
     --border: 240 10% 16%;
     --input: 240 10% 16%;
     --ring: 72 85% 58%;
-    --radius: 0.5rem;
+    --radius: 0.875rem;
 
     --sidebar-background: 240 12% 6%;
     --sidebar-foreground: 0 0% 90%;
@@ -42,12 +42,20 @@
     --surface-elevated: 240 12% 10%;
     --gradient-start: 72 85% 58%;
     --gradient-end: 140 70% 45%;
+    --shadow-sm: 0px 1px 22.25px 0px hsla(214, 32%, 91%, 0);
+    --shadow: 0px 1px 44.5px 0px hsla(214, 32%, 91%, 0);
+    --shadow-md: 0px 1px 66.75px 0px hsla(214, 32%, 91%, 0);
+    --shadow-lg: 0px 1px 111.25px 0px hsla(214, 32%, 91%, 0);
   }
 
   .dark {
     --background: 240 15% 4%;
     --foreground: 0 0% 95%;
-    --radius: 0.5rem;
+    --radius: 0.875rem;
+    --shadow-sm: 0px 1px 22.25px 0px hsla(214, 32%, 91%, 0);
+    --shadow: 0px 1px 44.5px 0px hsla(214, 32%, 91%, 0);
+    --shadow-md: 0px 1px 66.75px 0px hsla(214, 32%, 91%, 0);
+    --shadow-lg: 0px 1px 111.25px 0px hsla(214, 32%, 91%, 0);
   }
 }
 
