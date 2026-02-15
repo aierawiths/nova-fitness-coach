@@ -3,7 +3,7 @@ import { Dumbbell, Apple, ScanLine, TrendingUp, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
-  { to: "/dashboard", icon: Dumbbell, label: "Workout" },
+  { to: "/workout", icon: Dumbbell, label: "Workout" },
   { to: "/diet", icon: Apple, label: "Diet" },
   { to: "/scan", icon: ScanLine, label: "Scan" },
   { to: "/progress", icon: TrendingUp, label: "Progress" },
