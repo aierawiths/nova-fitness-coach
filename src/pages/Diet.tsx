@@ -82,10 +82,12 @@ const Diet = () => {
           </div>
         </motion.div>
 
-        <Button variant="glow" className="w-full mt-5" onClick={handleGenerate} disabled={generating}>
-          <Sparkles className="w-4 h-4" />
-          {generating ? "Generating..." : "Generate New Plan"}
-        </Button>
+        <div className="mt-4 p-3 rounded-xl bg-accent/10 border border-accent/20">
+          <p className="text-xs text-muted-foreground text-center">
+            <Sparkles className="w-3 h-3 inline mr-1 text-accent" />
+            Diet plans are auto-generated to match your workout. Go to <span className="font-semibold text-accent">Workout</span> to generate a new synced plan.
+          </p>
+        </div>
 
         {loading ? (
           <div className="mt-8 flex justify-center"><Sparkles className="w-6 h-6 text-primary animate-pulse-glow" /></div>

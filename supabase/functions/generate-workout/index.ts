@@ -22,15 +22,34 @@ serve(async (req) => {
     const { data: profile } = await supabaseClient.from("profiles").select("*").eq("id", user.id).single();
     if (!profile) throw new Error("Profile not found");
 
-    // Step 1: Generate workout plan
-    const workoutPrompt = `You are a certified fitness trainer. Generate a structured 7-day workout plan for:
+    // Parse custom prompt from request body
+    let customPrompt = "";
+    try {
+      const body = await req.json();
+      customPrompt = body?.customPrompt || "";
+    } catch { /* no body */ }
+
+    // Step 1: Generate workout plan with optional custom prompt
+    const userContext = `User profile:
 - Goal: ${profile.goal || "General Fitness"}
 - Experience: ${profile.experience || "Beginner"}
 - Equipment: ${profile.equipment || "Full Gym"}
 - Activity Level: ${profile.activity_level || "Moderate"}
 - Gender: ${profile.gender || "Not specified"}
 - Age: ${profile.age || "Not specified"}
-- Weight: ${profile.weight || "Not specified"}kg
+- Weight: ${profile.weight || "Not specified"}kg`;
+
+    const workoutPrompt = customPrompt
+      ? `You are a certified fitness trainer. The user has requested this specific workout plan: "${customPrompt}"
+
+${userContext}
+
+Generate a structured 7-day workout plan that matches their request while considering their profile. Adapt the plan to their experience level and available equipment.
+
+Return ONLY valid JSON (no markdown):
+{"weeklyPlan":[{"day":"Monday","focus":"","exercises":[{"name":"","sets":"","reps":"","rest":"","tips":""}]}]}`
+      : `You are a certified fitness trainer. Generate a structured 7-day workout plan for:
+${userContext}
 
 Return ONLY valid JSON (no markdown):
 {"weeklyPlan":[{"day":"Monday","focus":"","exercises":[{"name":"","sets":"","reps":"","rest":"","tips":""}]}]}`;
@@ -63,9 +82,11 @@ Return ONLY valid JSON (no markdown):
     if (workoutError) throw workoutError;
 
     // Step 2: Generate diet plan that complements the workout
-    const workoutSummary = workoutPlanData.weeklyPlan?.map((d: any) => `${d.day}: ${d.focus}`).join(", ") || "General training";
+    const workoutSummary = workoutPlanData.weeklyPlan?.map((d: any) => `${d.day}: ${d.focus} (${d.exercises?.length || 0} exercises)`).join(", ") || "General training";
 
     const dietPrompt = `You are a certified sports nutritionist. Generate a 7-day meal plan that perfectly complements this workout schedule: ${workoutSummary}
+
+${customPrompt ? `The user's workout focus: "${customPrompt}"` : ""}
 
 User profile:
 - Goal: ${profile.goal || "General Fitness"}
@@ -77,7 +98,7 @@ User profile:
 - Gender: ${profile.gender || "Not specified"}
 - Age: ${profile.age || "Not specified"}
 
-IMPORTANT: Match each day's nutrition to the workout intensity. On heavy training days, increase carbs and calories. On rest days, reduce calories slightly and increase protein for recovery.
+IMPORTANT: Match each day's nutrition to the workout intensity. On heavy training days (more exercises, compound movements), increase carbs and calories. On rest days, reduce calories slightly and increase protein for recovery. The diet must directly support the workout performance and recovery.
 
 Return ONLY valid JSON (no markdown):
 {"dailyCalories":"","protein":"","carbs":"","fat":"","mealPlan":[{"day":"Monday","meals":[{"mealType":"Breakfast","food":"","calories":"","protein":"","carbs":"","fat":""}]}]}`;
