@@ -82,7 +82,7 @@ const Dashboard = () => {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.3 }}
           className="mt-6 space-y-3">
           <h2 className="font-display text-base font-semibold text-foreground">Quick Actions</h2>
-          <QuickAction icon={Dumbbell} label="Generate AI Workout" onClick={() => navigate("/dashboard")} />
+          <QuickAction icon={Dumbbell} label="Generate AI Workout" onClick={() => navigate("/workout")} />
           <QuickAction icon={Flame} label="Generate AI Diet Plan" onClick={() => navigate("/diet")} />
           <QuickAction icon={Zap} label="Scan Food" onClick={() => navigate("/scan")} />
         </motion.div>
