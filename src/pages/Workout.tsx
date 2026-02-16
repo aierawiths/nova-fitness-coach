@@ -18,7 +18,7 @@ const Workout = () => {
   const [generating, setGenerating] = useState(false);
   const [loading, setLoading] = useState(true);
   const [prompt, setPrompt] = useState("");
-  const [isPremium] = useState(false); // TODO: integrate with RevenueCat
+  const [isPremium] = useState(true); // All users can generate workouts
 
   useEffect(() => {
     const fetchLatest = async () => {
