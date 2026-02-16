@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Dumbbell, Clock, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
+import { Sparkles, Dumbbell, Clock, RotateCcw, ChevronDown, ChevronUp, Lock, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -11,11 +12,13 @@ interface Exercise { name: string; sets: string; reps: string; rest: string; tip
 interface DayPlan { day: string; focus: string; exercises: Exercise[]; }
 
 const Workout = () => {
+  const navigate = useNavigate();
   const [plan, setPlan] = useState<DayPlan[]>([]);
   const [expandedDay, setExpandedDay] = useState<number>(0);
   const [generating, setGenerating] = useState(false);
   const [loading, setLoading] = useState(true);
   const [prompt, setPrompt] = useState("");
+  const [isPremium] = useState(false); // TODO: integrate with RevenueCat
 
   useEffect(() => {
     const fetchLatest = async () => {
@@ -28,6 +31,10 @@ const Workout = () => {
   }, []);
 
   const handleGenerate = async () => {
+    if (!isPremium) {
+      toast({ title: "Premium Required", description: "Upgrade to Premium to generate custom AI workout & diet plans.", variant: "destructive" });
+      return;
+    }
     setGenerating(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -55,25 +62,49 @@ const Workout = () => {
           <p className="text-sm text-muted-foreground mt-1">Describe your ideal workout & AI generates the plan</p>
         </motion.div>
 
+        {/* Custom Prompt Input */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-          className="mt-5">
+          className="mt-5 relative">
+          {!isPremium && (
+            <div className="absolute inset-0 z-10 rounded-2xl bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center gap-2">
+              <Lock className="w-5 h-5 text-primary" />
+              <span className="text-xs font-semibold text-primary">Premium Only</span>
+            </div>
+          )}
           <Textarea
             placeholder='e.g. "Push-pull-legs split focusing on hypertrophy with minimal equipment" or "Full body workout for fat loss, 45 min sessions"'
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             className="min-h-[80px] rounded-2xl border-border/30 bg-card text-sm resize-none"
+            disabled={!isPremium}
           />
         </motion.div>
 
-        <Button variant="glow" className="w-full mt-4" onClick={handleGenerate} disabled={generating}>
-          <Sparkles className="w-4 h-4" />
+        <Button variant="glow" className="w-full mt-4" onClick={handleGenerate} disabled={generating || !isPremium}>
+          {!isPremium && <Lock className="w-4 h-4" />}
+          {isPremium && <Sparkles className="w-4 h-4" />}
           {generating ? "Generating Workout & Diet..." : "Generate AI Plan"}
         </Button>
+
+        {!isPremium && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            className="mt-4 p-4 rounded-2xl border border-primary/30 bg-primary/5">
+            <div className="flex items-center gap-2 mb-2">
+              <Crown className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold text-primary">Unlock AI Generation</span>
+            </div>
+            <p className="text-xs text-muted-foreground">Get custom AI workout plans with matching diet plans, adaptive weekly updates, and advanced periodization.</p>
+            <Button variant="outline" size="sm" className="mt-3 border-primary text-primary hover:bg-primary/10"
+              onClick={() => navigate("/subscription")}>
+              Upgrade to Premium
+            </Button>
+          </motion.div>
+        )}
 
         {loading ? (
           <div className="mt-8 flex justify-center"><Sparkles className="w-6 h-6 text-primary animate-pulse-glow" /></div>
         ) : plan.length === 0 ? (
-          <div className="mt-8 text-center text-muted-foreground text-sm">No workout plan yet. Describe your goals above and generate one!</div>
+          <div className="mt-8 text-center text-muted-foreground text-sm">No workout plan yet. {isPremium ? "Describe your goals above and generate one!" : "Upgrade to Premium to get started!"}</div>
         ) : (
           <div className="mt-6 space-y-3">
             {plan.map((day, idx) => (
