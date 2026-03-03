@@ -77,6 +77,14 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <div className="absolute top-4 right-4 z-10">
+        <button
+          onClick={() => navigate("/dashboard")}
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium"
+        >
+          Skip
+        </button>
+      </div>
       <div className="relative h-[40vh] overflow-hidden">
         <img src={fitnessHero} alt="Fitness" className="w-full h-full object-cover opacity-40" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/60 to-background" />
