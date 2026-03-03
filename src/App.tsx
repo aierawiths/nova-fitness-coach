@@ -25,9 +25,9 @@ import NotFound from "@/pages/NotFound";
 const queryClient = new QueryClient();
 
 const OnboardingGuard = ({ children }: { children: React.ReactNode }) => {
-  const { profile, loading } = useAuth();
+  const { profile, loading, isGuest } = useAuth();
   if (loading) return null;
-  if (profile && !profile.onboarding_completed) return <Navigate to="/onboarding" replace />;
+  if (!isGuest && profile && !profile.onboarding_completed) return <Navigate to="/onboarding" replace />;
   return <>{children}</>;
 };
 

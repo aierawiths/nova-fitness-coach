@@ -13,7 +13,7 @@ import { isValidPhoneNumber } from "react-phone-number-input";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, enableGuestMode } = useAuth();
   const [mode, setMode] = useState<"email" | "phone">("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -79,7 +79,7 @@ const Login = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <div className="absolute top-4 right-4 z-10">
         <button
-          onClick={() => navigate("/dashboard")}
+          onClick={() => { enableGuestMode(); navigate("/dashboard"); }}
           className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium"
         >
           Skip
