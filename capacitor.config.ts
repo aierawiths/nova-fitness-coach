@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.126f3cf90ea4418baa9763b562c1f190',
+  appId: 'com.fitnova.app',
   appName: 'FitNova',
   webDir: 'dist',
   server: {
