@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Dumbbell, Flame, Zap, Trophy, ChevronRight, Sparkles,
-  TrendingUp, Target, Activity, ArrowUpRight, Calendar
+  TrendingUp, Target, Activity, ArrowUpRight, Calendar, Info, Clock, CheckCircle2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -43,20 +43,56 @@ const GlowOrb = ({ className }: { className?: string }) => (
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
+  
+  // Stats and Daily Info
   const [stats, setStats] = useState({ workouts: 0, scans: 0, logs: 0 });
+  const [dailyActivity, setDailyActivity] = useState({ todayWorkouts: 0, todayScans: 0, todayLogs: 0 });
+  
+  // Recents (Phase 1)
+  const [recents, setRecents] = useState<{
+    workout: any | null;
+    diet: any | null;
+    food: any | null;
+  }>({ workout: null, diet: null, food: null });
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchDashboardData = async () => {
+      // 1. Fetch total counts
       const [wp, fl, pl] = await Promise.all([
         (supabase.from("workout_plans") as any).select("id", { count: "exact", head: true }),
         (supabase.from("food_logs") as any).select("id", { count: "exact", head: true }),
         (supabase.from("progress_logs") as any).select("id", { count: "exact", head: true }),
       ]);
       setStats({ workouts: wp.count || 0, scans: fl.count || 0, logs: pl.count || 0 });
+
+      // 2. Fetch today's activity (Phase 2)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayISO = today.toISOString();
+
+      const [wpToday, flToday, plToday] = await Promise.all([
+        (supabase.from("workout_plans") as any).select("id", { count: "exact", head: true }).gte("created_at", todayISO),
+        (supabase.from("food_logs") as any).select("id", { count: "exact", head: true }).gte("created_at", todayISO),
+        (supabase.from("progress_logs") as any).select("id", { count: "exact", head: true }).gte("created_at", todayISO),
+      ]);
+      setDailyActivity({ todayWorkouts: wpToday.count || 0, todayScans: flToday.count || 0, todayLogs: plToday.count || 0 });
+
+      // 3. Fetch recent artifacts (Phase 1)
+      const userFilter = user ? { user_id: user.id } : {}; // fallback for guests if needed, though RLS handles it mostly.
+      
+      const { data: recentWorkout } = await supabase.from('workout_plans').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle();
+      const { data: recentDiet } = await supabase.from('diet_plans').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle();
+      const { data: recentFood } = await supabase.from('food_logs').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle();
+
+      setRecents({
+        workout: recentWorkout,
+        diet: recentDiet,
+        food: recentFood,
+      });
     };
-    fetchStats();
-  }, []);
+    fetchDashboardData();
+  }, [user]);
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -65,7 +101,22 @@ const Dashboard = () => {
     return "Good Evening";
   };
 
-  const goalProgress = Math.min(((stats.workouts + stats.scans + stats.logs) / 15) * 100, 100);
+  const dailyGoalTarget = 3; // Example: e.g. 1 workout, 2 food logs a day
+  const dailyTotal = dailyActivity.todayWorkouts + dailyActivity.todayScans + dailyActivity.todayLogs;
+  const goalProgress = Math.min((dailyTotal / dailyGoalTarget) * 100, 100);
+
+  // Dynamic AI Insight phase 2
+  const getDailyMessage = () => {
+    const h = new Date().getHours();
+    if (dailyTotal === 0) {
+      if (h < 10) return "Start your day strong! Log your breakfast or generate a morning workout to get moving.";
+      if (h < 15) return "You haven't logged any activity today yet! Let's get a quick session in.";
+      return "It's getting late, but there's still time to track your dinner or do a quick stretch.";
+    }
+    if (goalProgress >= 100) return "Incredible! You crushed your daily goals today! 🔥 Take some time to rest and recover.";
+    if (dailyActivity.todayWorkouts === 0 && h > 15) return "Your nutrition is on track, but you haven't worked out yet! Time to sweat! 💦";
+    return "Great momentum today! Keep logging your meals and stay hydrated.";
+  };
 
   return (
     <div className="min-h-screen bg-background safe-top relative overflow-hidden">
@@ -93,7 +144,7 @@ const Dashboard = () => {
           </motion.button>
         </motion.div>
 
-        {/* Hero Card */}
+        {/* Daily Activity Hero Card */}
         <motion.div variants={item} className="mt-6 relative overflow-hidden rounded-[2rem] border border-primary/20 shadow-lg shadow-primary/5">
           <div className="absolute inset-0 bg-gradient-primary opacity-[0.08]" />
           <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-primary/10 blur-2xl" />
@@ -107,20 +158,19 @@ const Dashboard = () => {
             <div className="flex-1">
               <div className="flex items-center gap-1.5 mb-1">
                 <Target className="w-4 h-4 text-primary" />
-                <span className="text-xs font-bold text-primary uppercase tracking-wider">Weekly Goal</span>
+                <span className="text-xs font-bold text-primary uppercase tracking-wider">Today's Activity</span>
               </div>
               <p className="text-base text-foreground font-bold leading-snug">
-                {profile?.goal || "General Fitness"}
+                {dailyTotal >= dailyGoalTarget ? "Daily Goal Crushed! 🎉" : `${dailyTotal} / ${dailyGoalTarget} Daily Actions`}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {stats.workouts + stats.scans + stats.logs} / 15 activities
+                {dailyActivity.todayWorkouts} Workouts • {dailyActivity.todayScans} Meals • {dailyActivity.todayLogs} Logs
               </p>
             </div>
-            <ArrowUpRight className="w-4 h-4 text-primary/50" />
           </div>
         </motion.div>
 
-        {/* AI Insight Banner */}
+        {/* AI Insight Banner (Dynamic Phase 2) */}
         <motion.div variants={item}
           className="mt-5 p-5 rounded-2xl glass border-primary/10 relative overflow-hidden shadow-sm">
           <div className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full bg-primary/5 blur-xl" />
@@ -129,13 +179,9 @@ const Dashboard = () => {
               <Sparkles className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <span className="text-xs font-extrabold text-primary uppercase tracking-widest">AI Insight</span>
+              <span className="text-xs font-extrabold text-primary uppercase tracking-widest">AI Coach Insight</span>
               <p className="text-sm text-foreground/80 font-medium mt-1 leading-relaxed">
-                {profile?.goal === "Lose Fat"
-                  ? "Stay in a calorie deficit and keep your protein high today — you've got this! 💪"
-                  : profile?.goal === "Gain Muscle"
-                  ? "Focus on progressive overload and fuel your muscles with quality nutrition! 🔥"
-                  : "Consistency is the real superpower — keep showing up every day! ⚡"}
+                {getDailyMessage()}
               </p>
             </div>
           </div>
@@ -169,39 +215,128 @@ const Dashboard = () => {
           </div>
         </motion.div>
 
+        {/* Recents Section (Phase 1) */}
+        <motion.div variants={item} className="mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display text-sm font-bold text-foreground flex items-center gap-2 uppercase tracking-wide">
+              <Clock className="w-4 h-4 text-muted-foreground" />
+              Recent Activity
+            </h2>
+          </div>
+          <div className="space-y-3">
+            {!recents.workout && !recents.diet && !recents.food && (
+              <div className="p-4 rounded-2xl border border-dashed border-border flex flex-col items-center justify-center text-center py-8 bg-secondary/20">
+                <Info className="w-8 h-8 text-muted-foreground/50 mb-2" />
+                <p className="text-sm text-muted-foreground font-medium">No recent activity found.</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Generate a workout or scan food to see it here!</p>
+              </div>
+            )}
+            
+            {recents.workout && (
+              <motion.button 
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate("/workout")}
+                className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-card border border-border/40 shadow-sm text-left group transition-all"
+              >
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Dumbbell className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <p className="text-[10px] text-primary font-bold uppercase tracking-wider mb-0.5">Latest AI Workout</p>
+                  <p className="text-sm font-bold text-foreground truncate block">
+                    {/* Access deep JSON props safely simply by guessing structure, or fallback */}
+                    {(recents.workout.plan_data as any)?.workout_plan?.title || "Custom Daily Routine"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5 block">
+                    {new Date(recents.workout.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground/50 group-hover:translate-x-1 transition-transform" />
+              </motion.button>
+            )}
+
+            {recents.diet && (
+              <motion.button 
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate("/diet")}
+                className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-card border border-border/40 shadow-sm text-left group transition-all"
+              >
+                <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+                  <Flame className="w-5 h-5 text-orange-500" />
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <p className="text-[10px] text-orange-500 font-bold uppercase tracking-wider mb-0.5">Latest Diet Plan</p>
+                  <p className="text-sm font-bold text-foreground truncate block">
+                    Custom Daily Meal Strategy
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5 block">
+                    {new Date(recents.diet.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground/50 group-hover:translate-x-1 transition-transform" />
+              </motion.button>
+            )}
+
+            {recents.food && (
+              <motion.button 
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate("/scan")}
+                className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-card border border-border/40 shadow-sm text-left group transition-all"
+              >
+                <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center shrink-0 overflow-hidden relative">
+                  {recents.food.image_url ? (
+                    <img src={recents.food.image_url} className="absolute inset-0 w-full h-full object-cover" alt="food" />
+                  ) : (
+                    <Zap className="w-5 h-5 text-accent" />
+                  )}
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <p className="text-[10px] text-accent font-bold uppercase tracking-wider mb-0.5">Most Recent Meal</p>
+                  <p className="text-sm font-bold text-foreground truncate block capitalize">
+                    {recents.food.food_name || "Unknown Food"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5 block">
+                    {recents.food.estimated_calories} kcal • {new Date(recents.food.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground/50 group-hover:translate-x-1 transition-transform" />
+              </motion.button>
+            )}
+          </div>
+        </motion.div>
+
         {/* Quick Actions */}
-        <motion.div variants={item} className="mt-6">
-          <h2 className="font-display text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
+        <motion.div variants={item} className="mt-8">
+          <h2 className="font-display text-sm font-bold text-foreground mb-4 uppercase tracking-wide flex items-center gap-2">
+            <Zap className="w-4 h-4 text-accent" />
             Quick Actions
           </h2>
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {[
               { icon: Dumbbell, label: "Generate AI Workout", sub: "Custom plan from your prompt", to: "/workout", accent: true },
               { icon: Flame, label: "View Diet Plan", sub: "Auto-generated with workout", to: "/diet", accent: false },
-              { icon: Zap, label: "Scan Food", sub: "AI calorie & macro analysis", to: "/scan", accent: false },
-              { icon: Trophy, label: "Track Progress", sub: "Log weight & body fat", to: "/progress", accent: false },
+              { icon: ScanLine, label: "Scan Food", sub: "AI calorie & macro analysis", to: "/scan", accent: false },
             ].map((a) => (
               <motion.button
                 key={a.label}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => navigate(a.to)}
-                className={`flex items-center gap-3.5 w-full p-3.5 rounded-2xl border transition-all group ${
+                className={`flex items-center gap-4 w-full p-4 rounded-2xl border transition-all group shadow-sm ${
                   a.accent
                     ? "bg-primary/5 border-primary/20 hover:bg-primary/10"
                     : "bg-secondary/40 border-border/20 hover:bg-secondary/60"
                 }`}
               >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
                   a.accent ? "bg-primary/15" : "bg-secondary"
                 }`}>
-                  <a.icon className={`w-4.5 h-4.5 ${a.accent ? "text-primary" : "text-muted-foreground"}`} />
+                  <a.icon className={`w-5 h-5 ${a.accent ? "text-primary" : "text-muted-foreground"}`} />
                 </div>
                 <div className="flex-1 text-left">
-                  <span className={`text-sm font-medium ${a.accent ? "text-primary" : "text-foreground"}`}>{a.label}</span>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">{a.sub}</p>
+                  <span className={`text-base font-bold ${a.accent ? "text-primary" : "text-foreground"}`}>{a.label}</span>
+                  <p className="text-xs font-medium text-muted-foreground mt-0.5">{a.sub}</p>
                 </div>
-                <ChevronRight className={`w-4 h-4 transition-transform group-hover:translate-x-0.5 ${
+                <ChevronRight className={`w-5 h-5 transition-transform group-hover:translate-x-1 ${
                   a.accent ? "text-primary/50" : "text-muted-foreground/50"
                 }`} />
               </motion.button>
