@@ -93,11 +93,16 @@ const Scan = () => {
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({ title: "Session expired", description: "Please log in again.", variant: "destructive" });
+        setScanning(false);
+        return;
+      }
       const res = await supabase.functions.invoke("analyze-food", {
         body: { imageBase64: base64 },
-        headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       if (res.error) throw new Error(res.error.message);
+      if (res.data?.error) throw new Error(res.data.error);
       setResult(res.data);
       toast({ title: "Food analyzed successfully!" });
     } catch (err: any) {
