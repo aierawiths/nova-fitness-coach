@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Dumbbell, Flame, Zap, Trophy, ChevronRight, Sparkles,
-  TrendingUp, Target, Activity, ArrowUpRight, Calendar, Info, Clock, CheckCircle2
+  TrendingUp, Target, Activity, ArrowUpRight, Calendar, Info, Clock, CheckCircle2, ScanLine
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
