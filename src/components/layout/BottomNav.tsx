@@ -1,12 +1,12 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Dumbbell, Apple, ScanLine, TrendingUp, User } from "lucide-react";
+import { Dumbbell, Apple, ScanLine, Home, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
+  { to: "/dashboard", icon: Home, label: "Home" },
   { to: "/workout", icon: Dumbbell, label: "Workout" },
-  { to: "/diet", icon: Apple, label: "Diet" },
   { to: "/scan", icon: ScanLine, label: "Scan" },
-  { to: "/progress", icon: TrendingUp, label: "Progress" },
+  { to: "/diet", icon: Apple, label: "Diet" },
   { to: "/profile", icon: User, label: "Profile" },
 ];
 

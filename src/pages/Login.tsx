@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import { isValidPhoneNumber } from "react-phone-number-input";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { signIn, enableGuestMode } = useAuth();
+  const { signIn, enableGuestMode, user, isGuest } = useAuth();
   const [mode, setMode] = useState<"email" | "phone">("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,13 +21,19 @@ const Login = () => {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loadingUI, setLoadingUI] = useState(false);
+
+  useEffect(() => {
+    if (user || isGuest) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, isGuest, navigate]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setLoadingUI(true);
     const { error } = await signIn(email, password);
-    setLoading(false);
+    setLoadingUI(false);
     if (error) {
       toast({ title: "Login failed", description: error.message, variant: "destructive" });
     } else {
@@ -40,7 +46,7 @@ const Login = () => {
       toast({ title: "Invalid number", description: "Please enter a valid phone number with country code.", variant: "destructive" });
       return;
     }
-    setLoading(true);
+    setLoadingUI(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-otp", {
         body: { phone },
@@ -52,12 +58,12 @@ const Login = () => {
     } catch (err: any) {
       toast({ title: "Failed to send OTP", description: err.message, variant: "destructive" });
     }
-    setLoading(false);
+    setLoadingUI(false);
   };
 
   const handleVerifyOtp = async () => {
     if (otp.length !== 6) return;
-    setLoading(true);
+    setLoadingUI(true);
     try {
       const { data, error } = await supabase.functions.invoke("verify-otp", {
         body: { phone, otp },
@@ -72,7 +78,7 @@ const Login = () => {
     } catch (err: any) {
       toast({ title: "Verification failed", description: err.message, variant: "destructive" });
     }
-    setLoading(false);
+    setLoadingUI(false);
   };
 
   return (
@@ -128,8 +134,8 @@ const Login = () => {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            <Button type="submit" variant="glow" size="lg" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
+            <Button type="submit" variant="glow" size="lg" className="w-full" disabled={loadingUI}>
+              {loadingUI ? "Signing in..." : "Sign In"}
             </Button>
             <div className="text-right">
               <Link to="/forgot-password" className="text-xs text-primary hover:underline">
@@ -146,8 +152,8 @@ const Login = () => {
                   onChange={setPhone}
                   placeholder="Enter phone number"
                 />
-                <Button variant="glow" size="lg" className="w-full" disabled={loading || !phone} onClick={handleSendOtp}>
-                  {loading ? "Sending..." : "Send OTP"}
+                <Button variant="glow" size="lg" className="w-full" disabled={loadingUI || !phone} onClick={handleSendOtp}>
+                  {loadingUI ? "Sending..." : "Send OTP"}
                 </Button>
               </>
             ) : (
@@ -167,8 +173,8 @@ const Login = () => {
                     </InputOTPGroup>
                   </InputOTP>
                 </div>
-                <Button variant="glow" size="lg" className="w-full" disabled={loading || otp.length !== 6} onClick={handleVerifyOtp}>
-                  {loading ? "Verifying..." : "Verify & Sign In"}
+                <Button variant="glow" size="lg" className="w-full" disabled={loadingUI || otp.length !== 6} onClick={handleVerifyOtp}>
+                  {loadingUI ? "Verifying..." : "Verify & Sign In"}
                 </Button>
                 <button onClick={() => { setOtpSent(false); setOtp(""); }} className="text-xs text-muted-foreground underline w-full text-center">
                   Change number

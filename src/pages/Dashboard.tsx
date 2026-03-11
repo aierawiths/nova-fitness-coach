@@ -77,8 +77,8 @@ const Dashboard = () => {
         {/* Header */}
         <motion.div variants={item} className="flex items-center justify-between">
           <div>
-            <p className="text-xs text-muted-foreground font-medium tracking-wide uppercase">{greeting()}</p>
-            <h1 className="font-display text-2xl font-bold text-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground font-semibold tracking-wide uppercase">{greeting()}</p>
+            <h1 className="font-display text-3xl font-extrabold text-foreground mt-0.5 tracking-tight">
               {profile?.name || "Athlete"}
             </h1>
           </div>
@@ -94,10 +94,10 @@ const Dashboard = () => {
         </motion.div>
 
         {/* Hero Card */}
-        <motion.div variants={item} className="mt-5 relative overflow-hidden rounded-3xl border border-primary/20">
+        <motion.div variants={item} className="mt-6 relative overflow-hidden rounded-[2rem] border border-primary/20 shadow-lg shadow-primary/5">
           <div className="absolute inset-0 bg-gradient-primary opacity-[0.08]" />
           <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-primary/10 blur-2xl" />
-          <div className="relative p-5 flex items-center gap-4">
+          <div className="relative p-6 flex items-center gap-5">
             <div className="relative">
               <ProgressRing percent={goalProgress} size={64} stroke={5} />
               <div className="absolute inset-0 flex items-center justify-center">
@@ -106,10 +106,10 @@ const Dashboard = () => {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-1.5 mb-1">
-                <Target className="w-3.5 h-3.5 text-primary" />
-                <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">Weekly Goal</span>
+                <Target className="w-4 h-4 text-primary" />
+                <span className="text-xs font-bold text-primary uppercase tracking-wider">Weekly Goal</span>
               </div>
-              <p className="text-sm text-foreground font-medium leading-snug">
+              <p className="text-base text-foreground font-bold leading-snug">
                 {profile?.goal || "General Fitness"}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
@@ -122,15 +122,15 @@ const Dashboard = () => {
 
         {/* AI Insight Banner */}
         <motion.div variants={item}
-          className="mt-4 p-4 rounded-2xl glass border-primary/10 relative overflow-hidden">
+          className="mt-5 p-5 rounded-2xl glass border-primary/10 relative overflow-hidden shadow-sm">
           <div className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full bg-primary/5 blur-xl" />
-          <div className="relative flex items-start gap-3">
-            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-              <Sparkles className="w-4 h-4 text-primary" />
+          <div className="relative flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+              <Sparkles className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <span className="text-[10px] font-bold text-primary uppercase tracking-widest">AI Insight</span>
-              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              <span className="text-xs font-extrabold text-primary uppercase tracking-widest">AI Insight</span>
+              <p className="text-sm text-foreground/80 font-medium mt-1 leading-relaxed">
                 {profile?.goal === "Lose Fat"
                   ? "Stay in a calorie deficit and keep your protein high today — you've got this! 💪"
                   : profile?.goal === "Gain Muscle"

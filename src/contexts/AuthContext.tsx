@@ -42,7 +42,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [isGuest, setIsGuest] = useState(false);
 
-  const enableGuestMode = () => setIsGuest(true);
+  const enableGuestMode = () => {
+    setIsGuest(true);
+    localStorage.setItem("fitnova_guest_mode", "true");
+  };
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
@@ -76,6 +79,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
+      } else {
+        // If not authenticated, check if they previously opted for guest mode
+        const guestStored = localStorage.getItem("fitnova_guest_mode");
+        if (guestStored === "true") {
+          setIsGuest(true);
+        }
       }
       setLoading(false);
     });
@@ -104,6 +113,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
     setProfile(null);
     setIsGuest(false);
+    localStorage.removeItem("fitnova_guest_mode");
   };
 
   return (
