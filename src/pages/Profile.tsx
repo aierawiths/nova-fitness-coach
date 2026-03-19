@@ -78,6 +78,12 @@ const Profile = () => {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="mt-8 space-y-3">
+          <button onClick={() => navigate("/admin")}
+            className="w-full flex items-center gap-4 p-4 rounded-2xl bg-primary/5 border border-primary/20 hover:bg-primary/10 transition-all shadow-sm">
+            <BarChart3 className="w-5 h-5 text-primary" />
+            <span className="flex-1 text-left text-sm font-bold text-primary">Admin Dashboard</span>
+            <ChevronRight className="w-5 h-5 text-primary/50" />
+          </button>
           <button onClick={() => navigate("/settings")}
             className="w-full flex items-center gap-4 p-4 rounded-2xl bg-secondary/50 border border-border/30 hover:bg-secondary transition-all shadow-sm">
             <Settings className="w-5 h-5 text-muted-foreground" />
