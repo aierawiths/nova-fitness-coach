@@ -17,6 +17,7 @@ const Workout = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { trackEvent, trackPageView } = useActivityTracker();
+  const [plan, setPlan] = useState<DayPlan[]>([]);
   const [expandedDay, setExpandedDay] = useState<number>(0);
   const [generating, setGenerating] = useState(false);
   const [loading, setLoading] = useState(true);
