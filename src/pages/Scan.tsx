@@ -73,6 +73,8 @@ const NutritionCircle = ({ label, value, unit, color, max, icon }: {
 };
 
 const Scan = () => {
+  const { user } = useAuth();
+  const { trackEvent } = useActivityTracker();
   const [result, setResult] = useState<ScanResult | null>(null);
   const [scanning, setScanning] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
