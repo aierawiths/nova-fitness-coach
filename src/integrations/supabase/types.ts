@@ -262,7 +262,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_login_count: {
+        Args: { user_id_input: string }
+        Returns: undefined
+      }
+      increment_profile_counter: {
+        Args: { counter_field: string; user_id_input: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
