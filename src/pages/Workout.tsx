@@ -15,7 +15,8 @@ interface DayPlan { day: string; focus: string; exercises: Exercise[]; }
 
 const Workout = () => {
   const navigate = useNavigate();
-  const [plan, setPlan] = useState<DayPlan[]>([]);
+  const { user } = useAuth();
+  const { trackEvent, trackPageView } = useActivityTracker();
   const [expandedDay, setExpandedDay] = useState<number>(0);
   const [generating, setGenerating] = useState(false);
   const [loading, setLoading] = useState(true);

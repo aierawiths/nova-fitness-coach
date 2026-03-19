@@ -106,6 +106,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) {
+      // Track login after successful sign-in
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        try {
+          await supabase.rpc("increment_login_count" as any, { user_id_input: session.user.id });
+          await (supabase.from("user_activity_logs") as any).insert({
+            user_id: session.user.id,
+            event_type: "login",
+            event_data: {},
+            page: "/login",
+          });
+        } catch {
+          // tracking failure should not block login
+        }
+      }
+    }
     return { error: error as Error | null };
   };
 
