@@ -22,6 +22,7 @@ import SettingsPage from "@/pages/SettingsPage";
 import Subscription from "@/pages/Subscription";
 import Legal from "@/pages/Legal";
 import NotFound from "@/pages/NotFound";
+import AdminDashboard from "@/pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +59,7 @@ const App = () => (
 
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
               <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
+              <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
               <Route path="/legal/:type" element={<Legal />} />
 
               <Route path="/" element={<Navigate to="/login" replace />} />

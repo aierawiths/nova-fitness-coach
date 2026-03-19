@@ -118,10 +118,15 @@ export type Database = {
           goal: string | null
           height: number | null
           id: string
+          last_login_at: string | null
           location: string | null
+          login_count: number | null
           name: string | null
           onboarding_completed: boolean
           phone: string | null
+          total_diet_plans_generated: number | null
+          total_food_scans: number | null
+          total_workouts_generated: number | null
           updated_at: string
           weight: number | null
         }
@@ -138,10 +143,15 @@ export type Database = {
           goal?: string | null
           height?: number | null
           id: string
+          last_login_at?: string | null
           location?: string | null
+          login_count?: number | null
           name?: string | null
           onboarding_completed?: boolean
           phone?: string | null
+          total_diet_plans_generated?: number | null
+          total_food_scans?: number | null
+          total_workouts_generated?: number | null
           updated_at?: string
           weight?: number | null
         }
@@ -158,10 +168,15 @@ export type Database = {
           goal?: string | null
           height?: number | null
           id?: string
+          last_login_at?: string | null
           location?: string | null
+          login_count?: number | null
           name?: string | null
           onboarding_completed?: boolean
           phone?: string | null
+          total_diet_plans_generated?: number | null
+          total_food_scans?: number | null
+          total_workouts_generated?: number | null
           updated_at?: string
           weight?: number | null
         }
@@ -194,6 +209,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activity_logs: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          page: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          page?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          page?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       workout_plans: {
         Row: {
           created_at: string
@@ -220,7 +262,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_login_count: {
+        Args: { user_id_input: string }
+        Returns: undefined
+      }
+      increment_profile_counter: {
+        Args: { counter_field: string; user_id_input: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

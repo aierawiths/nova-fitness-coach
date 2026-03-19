@@ -7,12 +7,16 @@ import { Sparkles, Dumbbell, Clock, RotateCcw, ChevronDown, ChevronUp, Lock, Cro
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useActivityTracker, incrementProfileCounter } from "@/hooks/useActivityTracker";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Exercise { name: string; sets: string; reps: string; rest: string; tips: string; }
 interface DayPlan { day: string; focus: string; exercises: Exercise[]; }
 
 const Workout = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { trackEvent, trackPageView } = useActivityTracker();
   const [plan, setPlan] = useState<DayPlan[]>([]);
   const [expandedDay, setExpandedDay] = useState<number>(0);
   const [generating, setGenerating] = useState(false);
@@ -47,6 +51,10 @@ const Workout = () => {
       if (workoutData?.weeklyPlan) {
         setPlan(workoutData.weeklyPlan);
         toast({ title: "Workout & Diet plan generated!", description: "Your matching diet plan is ready on the Diet page." });
+        if (user) {
+          trackEvent("workout_generated", { prompt: prompt.trim() });
+          incrementProfileCounter(user.id, "total_workouts_generated");
+        }
       }
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });

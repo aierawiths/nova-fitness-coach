@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Camera, ImageIcon, Sparkles, AlertTriangle, Leaf, Wheat, Droplets, MapPin, Globe, Heart, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useActivityTracker, incrementProfileCounter } from "@/hooks/useActivityTracker";
 
 interface ScanResult {
   foodName: string;
@@ -71,6 +73,8 @@ const NutritionCircle = ({ label, value, unit, color, max, icon }: {
 };
 
 const Scan = () => {
+  const { user } = useAuth();
+  const { trackEvent } = useActivityTracker();
   const [result, setResult] = useState<ScanResult | null>(null);
   const [scanning, setScanning] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
@@ -105,6 +109,10 @@ const Scan = () => {
       if (res.data?.error) throw new Error(res.data.error);
       setResult(res.data);
       toast({ title: "Food analyzed successfully!" });
+      if (user) {
+        trackEvent("food_scanned", { food_name: res.data?.foodName });
+        incrementProfileCounter(user.id, "total_food_scans");
+      }
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     }
