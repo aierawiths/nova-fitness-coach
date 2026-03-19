@@ -118,10 +118,15 @@ export type Database = {
           goal: string | null
           height: number | null
           id: string
+          last_login_at: string | null
           location: string | null
+          login_count: number | null
           name: string | null
           onboarding_completed: boolean
           phone: string | null
+          total_diet_plans_generated: number | null
+          total_food_scans: number | null
+          total_workouts_generated: number | null
           updated_at: string
           weight: number | null
         }
@@ -138,10 +143,15 @@ export type Database = {
           goal?: string | null
           height?: number | null
           id: string
+          last_login_at?: string | null
           location?: string | null
+          login_count?: number | null
           name?: string | null
           onboarding_completed?: boolean
           phone?: string | null
+          total_diet_plans_generated?: number | null
+          total_food_scans?: number | null
+          total_workouts_generated?: number | null
           updated_at?: string
           weight?: number | null
         }
@@ -158,10 +168,15 @@ export type Database = {
           goal?: string | null
           height?: number | null
           id?: string
+          last_login_at?: string | null
           location?: string | null
+          login_count?: number | null
           name?: string | null
           onboarding_completed?: boolean
           phone?: string | null
+          total_diet_plans_generated?: number | null
+          total_food_scans?: number | null
+          total_workouts_generated?: number | null
           updated_at?: string
           weight?: number | null
         }
@@ -191,6 +206,33 @@ export type Database = {
           measurement_date?: string
           user_id?: string
           weight?: number
+        }
+        Relationships: []
+      }
+      user_activity_logs: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          page: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          page?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          page?: string | null
+          user_id?: string
         }
         Relationships: []
       }
