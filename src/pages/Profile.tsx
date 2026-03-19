@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { User, Settings, Crown, ChevronRight, LogOut, Dumbbell, Apple, ScanLine, TrendingUp, Moon, Sun } from "lucide-react";
+import { User, Settings, Crown, ChevronRight, LogOut, Dumbbell, Apple, ScanLine, TrendingUp, Moon, Sun, BarChart3 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "next-themes";
