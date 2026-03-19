@@ -59,6 +59,7 @@ const App = () => (
 
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
               <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
+              <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
               <Route path="/legal/:type" element={<Legal />} />
 
               <Route path="/" element={<Navigate to="/login" replace />} />
