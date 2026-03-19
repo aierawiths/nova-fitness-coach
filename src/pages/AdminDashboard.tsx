@@ -82,11 +82,6 @@ const AdminDashboard = () => {
         navigate("/login");
         return;
       }
-      const res = await supabase.functions.invoke("admin-analytics", {
-        body: null,
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-
       // Use the query param approach by constructing URL manually
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-analytics?action=overview`,
