@@ -51,6 +51,10 @@ const Workout = () => {
       if (workoutData?.weeklyPlan) {
         setPlan(workoutData.weeklyPlan);
         toast({ title: "Workout & Diet plan generated!", description: "Your matching diet plan is ready on the Diet page." });
+        if (user) {
+          trackEvent("workout_generated", { prompt: prompt.trim() });
+          incrementProfileCounter(user.id, "total_workouts_generated");
+        }
       }
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });

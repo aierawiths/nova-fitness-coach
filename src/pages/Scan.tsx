@@ -109,6 +109,10 @@ const Scan = () => {
       if (res.data?.error) throw new Error(res.data.error);
       setResult(res.data);
       toast({ title: "Food analyzed successfully!" });
+      if (user) {
+        trackEvent("food_scanned", { food_name: res.data?.foodName });
+        incrementProfileCounter(user.id, "total_food_scans");
+      }
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     }
