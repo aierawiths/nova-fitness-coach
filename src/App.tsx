@@ -23,6 +23,7 @@ import Subscription from "@/pages/Subscription";
 import Legal from "@/pages/Legal";
 import NotFound from "@/pages/NotFound";
 import AdminDashboard from "@/pages/AdminDashboard";
+import SplashScreen from "@/components/SplashScreen";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <SplashScreen />
         <BrowserRouter>
           <AuthProvider>
             <Routes>
